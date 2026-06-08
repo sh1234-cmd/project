@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows Web OS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="aero">
+    <div id="boot-screen">
+        <div class="boot-logo">
+            <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 13.5L43 8.5V46.5H5V13.5ZM5 53.5H43V91.5L5 86.5V53.5ZM49 7.5L95 1V46.5H49V7.5ZM49 53.5H95V99L49 92.5V53.5Z" fill="#00ADEF"/>
+            </svg>
+            <h2>Starting Windows</h2>
+        </div>
+    </div>
+
+    <div id="desktop">
+        <div class="desktop-icons">
+            <div class="icon" ondblclick="openWindow('notepad')">
+                <img src="https://win98icons.alexmeub.com/icons/png/notepad-0.png" alt="Notepad">
+                <span>Notepad</span>
+            </div>
+            <div class="icon" ondblclick="openWindow('calculator')">
+                <img src="https://win98icons.alexmeub.com/icons/png/calculator-0.png" alt="Calculator">
+                <span>Calculator</span>
+            </div>
+            <div class="icon" ondblclick="openWindow('cmd')">
+                <img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" alt="CMD">
+                <span>CMD Prompt</span>
+            </div>
+            <div class="icon" ondblclick="openWindow('minesweeper')">
+                <img src="" >
+                <span>Minesweeper</span>
+            </div>
+            <div class="icon" ondblclick="openWindow('paint')">
+                <img src="https://win98icons.alexmeub.com/icons/png/paint_old-0.png" alt="Paint">
+                <span>Paint</span>
+            </div>
+            <div class="icon" ondblclick="openWindow('mediaplayer')">
+                <img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd-0.png" alt="Media Player">
+                <span>Media Player</span>
+            </div>
+            <div class="icon" ondblclick="openWindow('control-panel')">
+                <img src="" >
+                <span>Control Panel</span>
+            </div>
+        </div>
+        <div id="windows-container"></div>
+    </div>
+
+    <div id="taskbar">
+        <button id="start-btn" onclick="toggleStartMenu(event)">
+            <div class="orb">
+                <svg class="orb-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 22C30 23, 40 12, 48 10L48 46L10 46Z" fill="#F25022"/>
+                    <path d="M52 9C60 11, 70 21, 90 20L90 46L52 46Z" fill="#7FBA00"/>
+                    <path d="M10 50L48 50L48 86C40 84, 30 75, 10 76Z" fill="#00A4EF"/>
+                    <path d="M52 50L90 50L90 80C70 81, 60 91, 52 92Z" fill="#FFB900"/>
+                </svg>
+            </div>
+        </button>
+        <div id="taskbar-apps"></div>
+        <div id="system-tray">
+            <span id="clock">12:00 PM</span>
+        </div>
+    </div>
+
+    <div id="start-menu" class="hidden">
+        <div class="start-menu-left">
+            <div class="start-item" onclick="openWindow('notepad'); toggleStartMenu(event)">
+                <img src="https://win98icons.alexmeub.com/icons/png/notepad-0.png" width="16"> Notepad
+            </div>
+            <div class="start-item" onclick="openWindow('calculator'); toggleStartMenu(event)">
+                <img src="https://win98icons.alexmeub.com/icons/png/calculator-0.png" width="16"> Calculator
+            </div>
+            <div class="start-item" onclick="openWindow('cmd'); toggleStartMenu(event)">
+                <img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="16"> CMD Prompt
+            </div>
+            <div class="start-item" onclick="openWindow('minesweeper'); toggleStartMenu(event)">
+                <img src="https://win98icons.alexmeub.com/icons/png/minesweeper_laser-0.png" width="16"> Minesweeper
+            </div>
+            <div class="start-item" onclick="openWindow('paint'); toggleStartMenu(event)">
+                <img src="https://win98icons.alexmeub.com/icons/png/paint_old-0.png" width="16"> Paint
+            </div>
+            <div class="start-item" onclick="openWindow('mediaplayer'); toggleStartMenu(event)">
+                <img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd-0.png" width="16"> Media Player
+            </div>
+        </div>
+        <div class="start-menu-right">
+            <div class="user-profile">
+                <div class="avatar">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+                        <circle cx="50" cy="50" r="16" fill="#FFAA00"/>
+                        <circle cx="50" cy="22" r="14" fill="#FF5588"/>
+                        <circle cx="50" cy="78" r="14" fill="#FF5588"/>
+                        <circle cx="22" cy="50" r="14" fill="#FF5588"/>
+                        <circle cx="78" cy="50" r="14" fill="#FF5588"/>
+                    </svg>
+                </div>
+                <span>User</span>
+            </div>
+            <hr>
+            <div class="start-system-item" onclick="openWindow('control-panel'); toggleStartMenu(event)">Control Panel</div>
+        </div>
+    </div>
+
+    <template id="tpl-notepad">
+        <div class="app-content">
+            <textarea spellcheck="false"></textarea>
+        </div>
+    </template>
+    
+    <template id="tpl-calculator">
+        <div class="app-content calculator">
+            <input type="text" class="calc-display" disabled value="0">
+            <div class="calc-buttons">
+                <button onclick="calcType(event, '7')">7</button> <button onclick="calcType(event, '8')">8</button> <button onclick="calcType(event, '9')">9</button> <button onclick="calcOp(event, '/')">/</button>
+                <button onclick="calcType(event, '4')">4</button> <button onclick="calcType(event, '5')">5</button> <button onclick="calcType(event, '6')">6</button> <button onclick="calcOp(event, '*')">*</button>
+                <button onclick="calcType(event, '1')">1</button> <button onclick="calcType(event, '2')">2</button> <button onclick="calcType(event, '3')">3</button> <button onclick="calcOp(event, '-')">-</button>
+                <button onclick="calcType(event, '0')">0</button> <button onclick="calcClear(event)">C</button> <button onclick="calcEq(event)">=</button> <button onclick="calcOp(event, '+')">+</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-cmd">
+        <div class="app-content cmd" onclick="focusCmdInput(this)">
+            <div class="cmd-output">Microsoft Windows [Version 6.1.7601]<br>Copyright (c) 2009 Microsoft Corporation. All rights reserved.<br><br>C:\Users\User> </div>
+            <div class="cmd-input-line">
+                <input type="text" class="cmd-input" onkeypress="handleCmd(event)">
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-minesweeper">
+        <div class="app-content minesweeper-app">
+            <div class="ms-header">
+                <div class="ms-counter" id="ms-mines-count">010</div>
+                <button class="ms-smiley" onclick="initMinesweeper(event)">🙂</button>
+                <div class="ms-counter" id="ms-timer">000</div>
+            </div>
+            <div class="ms-grid" oncontextmenu="return false;"></div>
+        </div>
+    </template>
+
+    <template id="tpl-paint">
+        <div class="app-content paint-app">
+            <div class="paint-toolbar">
+                <input type="color" class="paint-color" value="#000000" onchange="updatePaintBrushColor(this)">
+                <div class="paint-sizes">
+                    <button class="size-btn active" onclick="setPaintBrushSize(event, 2)">Small</button>
+                    <button class="size-btn" onclick="setPaintBrushSize(event, 6)">Medium</button>
+                    <button class="size-btn" onclick="setPaintBrushSize(event, 12)">Large</button>
+                </div>
+                <button class="paint-clear-btn" onclick="clearPaintCanvas(this)">Clear</button>
+            </div>
+            <div class="canvas-container">
+                <canvas class="paint-canvas"></canvas>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-mediaplayer">
+        <div class="app-content player-app">
+            <div class="player-display">
+                <div class="visualization-box">
+                    <div class="bar animate-bar"></div>
+                    <div class="bar animate-bar"></div>
+                    <div class="bar animate-bar"></div>
+                    <div class="bar animate-bar"></div>
+                    <div class="bar animate-bar"></div>
+                </div>
+                <div class="track-info">
+                    <div class="track-title">Synthwave Dreams.mp3</div>
+                    <div class="track-status">Stopped</div>
+                </div>
+            </div>
+            <div class="player-controls">
+                <button onclick="controlPlayer(this, 'play')">▶ Play</button>
+                <button onclick="controlPlayer(this, 'pause')">⏸ Pause</button>
+                <button onclick="controlPlayer(this, 'stop')">⏹ Stop</button>
+            </div>
+            <audio class="player-audio-node" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto"></audio>
+        </div>
+    </template>
+
+    <template id="tpl-control-panel">
+        <div class="app-content control-panel-app">
+            <div class="cp-sidebar">
+                <div class="cp-nav-item active" onclick="switchCPTab(this, 'themes')">Personalization</div>
+                <div class="cp-nav-item" onclick="switchCPTab(this, 'system')">System Info</div>
+                <div class="cp-nav-item" onclick="switchCPTab(this, 'settings')">OS Tweaks</div>
+            </div>
+            <div class="cp-main">
+                <div id="cp-themes" class="cp-tab-pane">
+                    <h3>Select Desktop Theme</h3>
+                    <div class="theme-grid">
+                        <div class="theme-card card-aero" onclick="changeTheme('aero')">
+                            <div class="theme-preview"></div>
+                            <span> Aero Blue </span>
+                        </div>
+                        <div class="theme-card card-classic" onclick="changeTheme('classic')">
+                            <div class="theme-preview"></div>
+                            <span> Classic </span>
+                        </div>
+                        <div class="theme-card card-neon" onclick="changeTheme('neon')">
+                            <div class="theme-preview"></div>
+                            <span> Aero Black </span>
+                        </div>
+                    </div>
+                </div>
+                <div id="cp-system" class="cp-tab-pane hidden">
+                    <h3>System Information</h3>
+                    <table class="sys-info-table">
+                        <tr><td><strong>OS Version:</strong></td><td>WebOS Home Premium Pro (2026)</td></tr>
+                        <tr><td><strong>Processor:</strong></td><td>Virtual JS Core Architecture</td></tr>
+                        <tr><td><strong>Memory:</strong></td><td>Allocated Dynamic Heap RAM</td></tr>
+                        <tr><td><strong>System Type:</strong></td><td>64-bit Browser Engine Sandbox</td></tr>
+                    </table>
+                </div>
+                <div id="cp-settings" class="cp-tab-pane hidden">
+                    <h3>OS Configuration Tweaks</h3>
+                    <div class="tweak-item">
+                        <label><input type="checkbox" id="tweak-boot" checked onchange="toggleBootScreenSetting(this)"> Enable Boot Initialization Screen</label>
+                    </div>
+                    <div class="tweak-item" style="margin-top: 15px;">
+                        <p style="font-size:12px; margin-bottom:5px;">Desktop Wallpaper Pattern:</p>
+                        <select onchange="updateWallpaperPattern(this)" style="font-size:12px; padding:3px; width:100%;">
+                            <option value="gradient">Linear OS Gradient Style</option>
+                            <option value="solid">Solid Desktop Color Field</option>
+                            <option value="grid">Grid Retro Dev Framework Matrix</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="script.js"></script>
+</body>
+</html>
