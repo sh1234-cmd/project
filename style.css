@@ -54,12 +54,12 @@ body {
 .desktop-icons { padding: 10px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 15px; width: 80px; height: calc(100% - 20px); }
 .icon {
     display: flex; flex-direction: column; align-items: center;
-    color: white; text-shadow: 1px 1px 3px black; font-size: 12px;
+    color: white; text-shadow: 1px 1px 3px black; font-size: 11px;
     cursor: pointer; padding: 5px; border: 1px solid transparent; text-align: center;
     width: 75px;
 }
 .icon:hover { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 4px; }
-.icon img { width: 32px; height: 32px; margin-bottom: 5px; }
+.app-icon-wrapper { width: 32px; height: 32px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; }
 
 /* Taskbar Structure and Orb Setup */
 #taskbar {
@@ -115,6 +115,7 @@ body {
 .start-system-item { padding: 8px 10px; font-size: 13px; color: #0b3d59; cursor: pointer; }
 [data-theme="neon"] .start-system-item { color: #00f2fe; }
 .start-system-item:hover { font-weight: bold; }
+.sm-icon-placeholder { font-size: 16px; margin-right: 4px; }
 
 .user-profile { display: flex; align-items: center; margin-bottom: 20px; gap: 10px; }
 .user-profile .avatar {
