@@ -1,586 +1,339 @@
-// Global Configuration Flags managed via Control Panel
-let systemConfig = {
-    showBootScreen: true
-};
+// Window System Global Context Allocation
+let windowZIndex = 100;
+let activeWindowId = null;
+let msGrid = [];
+let msMines = 10;
+let msTimerInterval = null;
+let msTimeElapsed = 0;
+let msIsGameOver = false;
 
-// Boot Screen Logic
-setTimeout(() => {
-    const bootScreen = document.getElementById('boot-screen');
-    if (!systemConfig.showBootScreen) {
-        bootScreen.style.display = 'none';
-        return;
-    }
-    bootScreen.style.opacity = '0';
+// Initialization Hook
+window.addEventListener('DOMContentLoaded', () => {
+    // Break the bootloader scene wrap safely
     setTimeout(() => {
-        bootScreen.style.display = 'none';
-    }, 1000);
-}, 2000);
+        const boot = document.getElementById('boot-screen');
+        if (boot) {
+            boot.style.opacity = '0';
+            setTimeout(() => { boot.style.display = 'none'; }, 1000);
+        }
+    }, 1800);
 
-// System Clock
+    // Initialize System Tray Engine Output
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Global Click Dismiss rules
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('start-menu');
+        const startBtn = document.getElementById('start-btn');
+        if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && !startBtn.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+});
+
 function updateClock() {
+    const clockEl = document.getElementById('clock');
+    if (!clockEl) return;
     const now = new Date();
     let hours = now.getHours();
-    let minutes = now.getMinutes();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12; 
-    minutes = minutes < 10 ? '0' + minutes : minutes;
-    document.getElementById('clock').innerText = hours + ':' + minutes + ' ' + ampm;
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// Start Menu Toggle
-function toggleStartMenu(e) {
-    if (e) e.stopPropagation();
-    document.getElementById('start-menu').classList.toggle('hidden');
+    hours = hours ? hours : 12; // structural conversion format
+    clockEl.textContent = `${hours}:${minutes} ${ampm}`;
 }
 
-// Window Management System
-let zIndexCounter = 10;
-const windows = {};
+function toggleStartMenu(event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('start-menu');
+    if (menu) menu.classList.toggle('hidden');
+}
 
+// Window Controller Modules
 function openWindow(appId) {
-    if (windows[appId]) {
-        restoreWindow(appId);
+    const container = document.getElementById('windows-container');
+    if (!container) return;
+
+    // Avoid duplicating operational shells
+    if (document.getElementById(`win-${appId}`)) {
+        focusWindow(appId);
         return;
     }
-    const container = document.getElementById('windows-container');
-    const win = document.createElement('div');
-    win.className = 'window';
-    win.id = 'win-' + appId;
-    
-    const offset = Object.keys(windows).length * 30;
-    win.style.left = (100 + offset) + 'px';
-    win.style.top = (100 + offset) + 'px';
-    win.style.zIndex = ++zIndexCounter;
 
-    const titles = {
-        'notepad': 'Untitled - Notepad',
+    const template = document.getElementById(`tpl-${appId}`);
+    if (!template) return;
+
+    windowZIndex++;
+    const win = document.createElement('div');
+    win.id = `win-${appId}`;
+    win.className = 'window';
+    win.style.zIndex = windowZIndex;
+    win.style.left = `${50 + (windowZIndex % 10) * 15}px`;
+    win.style.top = `${40 + (windowZIndex % 10) * 15}px`;
+
+    const appTitles = {
+        'notepad': 'Notepad - Text Editor',
         'calculator': 'Calculator',
         'cmd': 'Command Prompt',
-        'minesweeper': 'Minesweeper',
+        'minesweeper': 'Minesweeper Pro',
         'paint': 'Paint Canvas Studio',
-        'mediaplayer': 'Windows Media Player',
+        'mediaplayer': 'Media Player v1.0',
         'control-panel': 'Control Panel'
     };
 
     win.innerHTML = `
-        <div class="title-bar" onmousedown="startDrag(event, '${appId}')">
-            <div class="title-bar-text">${titles[appId]}</div>
+        <div class="title-bar" onmousedown="startWindowDrag(event, '${appId}')">
+            <div class="title-bar-text">${appTitles[appId] || appId}</div>
             <div class="title-bar-controls">
-                <button class="control-btn" onclick="minimizeWindow(event, '${appId}')">_</button>
-                <button class="control-btn" onclick="maximizeWindow(event, '${appId}')">□</button>
-                <button class="control-btn close" onclick="closeWindow(event, '${appId}')">X</button>
+                <button class="control-btn" onclick="minimizeWindow('${appId}')">0</button>
+                <button class="control-btn" style="font-weight:bold;">1</button>
+                <button class="control-btn close" onclick="closeWindow('${appId}')">r</button>
             </div>
         </div>
-        <div class="window-content">
-            ${document.getElementById('tpl-' + appId).innerHTML}
+        <div class="window-content" onmousedown="focusWindow('${appId}')">
+            ${template.innerHTML}
         </div>
     `;
-    win.onmousedown = () => focusWindow(appId);
+
     container.appendChild(win);
-    
-    windows[appId] = { el: win, maximized: false, prevWidth: '400px', prevHeight: '300px', prevTop: '100px', prevLeft: '100px', calcValue: '' };
-    
-    addTaskbarItem(appId, titles[appId]);
+    addTaskbarTab(appId, appTitles[appId] || appId);
     focusWindow(appId);
 
-    // Initialization hooks for apps requiring dynamic engine bindings
-    if (appId === 'cmd') {
-        const input = win.querySelector('.cmd-input');
-        if (input) setTimeout(() => input.focus(), 50);
-    } else if (appId === 'minesweeper') {
-        initMinesweeperOnElement(win);
+    // Initialization bindings unique to context parameters
+    if (appId === 'minesweeper') {
+        const gridContainer = win.querySelector('.ms-grid');
+        if (gridContainer) initMinesweeperElements(gridContainer);
     } else if (appId === 'paint') {
-        initPaintCanvasEngine(win);
-    }
-}
-
-function closeWindow(e, appId) {
-    if (e) e.stopPropagation();
-    if (!windows[appId]) return;
-    
-    if (appId === 'minesweeper' && windows[appId].msTimerId) {
-        clearInterval(windows[appId].msTimerId);
-    }
-    if (appId === 'mediaplayer') {
-        const audio = windows[appId].el.querySelector('.player-audio-node');
-        if (audio) { audio.pause(); audio.currentTime = 0; }
-    }
-
-    windows[appId].el.remove();
-    delete windows[appId];
-    const taskbarItem = document.getElementById('taskbar-item-' + appId);
-    if (taskbarItem) taskbarItem.remove();
-}
-
-function minimizeWindow(e, appId) {
-    if (e) e.stopPropagation();
-    if (!windows[appId]) return;
-    windows[appId].el.style.display = 'none';
-    const taskbarItem = document.getElementById('taskbar-item-' + appId);
-    if (taskbarItem) taskbarItem.classList.remove('active');
-}
-
-function restoreWindow(appId) {
-    if (!windows[appId]) return;
-    windows[appId].el.style.display = 'flex';
-    focusWindow(appId);
-    if (appId === 'paint') {
-        syncPaintCanvasSize(windows[appId].el);
-    }
-}
-
-function maximizeWindow(e, appId) {
-    if (e) e.stopPropagation();
-    const state = windows[appId];
-    if (!state) return;
-    const win = state.el;
-    
-    if (state.maximized) {
-        win.style.width = state.prevWidth;
-        win.style.height = state.prevHeight;
-        win.style.top = state.prevTop;
-        win.style.left = state.prevLeft;
-        state.maximized = false;
-    } else {
-        state.prevWidth = win.style.width || '400px';
-        state.prevHeight = win.style.height || '300px';
-        state.prevTop = win.style.top;
-        state.prevLeft = win.style.left;
-        
-        win.style.width = '100%';
-        win.style.height = 'calc(100% - 40px)';
-        win.style.top = '0';
-        win.style.left = '0';
-        state.maximized = true;
-    }
-
-    if (appId === 'paint') {
-        setTimeout(() => syncPaintCanvasSize(win), 50);
+        initPaintCanvas(win.querySelector('.paint-canvas'));
     }
 }
 
 function focusWindow(appId) {
-    if (!windows[appId]) return;
-    windows[appId].el.style.zIndex = ++zIndexCounter;
-    
-    document.querySelectorAll('.taskbar-item').forEach(el => el.classList.remove('active'));
-    const taskbarBtn = document.getElementById('taskbar-item-' + appId);
-    if(taskbarBtn) taskbarBtn.classList.add('active');
+    const win = document.getElementById(`win-${appId}`);
+    if (!win) return;
+    windowZIndex++;
+    win.style.zIndex = windowZIndex;
+    activeWindowId = appId;
+
+    document.querySelectorAll('.taskbar-item').forEach(item => item.classList.remove('active'));
+    const tbi = document.getElementById(`tbi-${appId}`);
+    if (tbi) tbi.classList.add('active');
 }
 
-// Drag & Drop Logic
-let activeDrag = null;
-let startX = 0, startY = 0;
-let startLeft = 0, startTop = 0;
+function closeWindow(appId) {
+    const win = document.getElementById(`win-${appId}`);
+    if (win) win.remove();
+    const tbi = document.getElementById(`tbi-${appId}`);
+    if (tbi) tbi.remove();
 
-function startDrag(e, appId) {
-    if (e.target.closest('.title-bar-controls')) return; 
-    if (windows[appId].maximized) return; 
-    
-    activeDrag = windows[appId].el;
-    focusWindow(appId);
-    
-    startX = e.clientX;
-    startY = e.clientY;
-    
-    startLeft = parseInt(activeDrag.style.left, 10) || 0;
-    startTop = parseInt(activeDrag.style.top, 10) || 0;
-    
-    document.onmousemove = doDrag;
-    document.onmouseup = stopDrag;
-    e.preventDefault();
-}
-
-function doDrag(e) {
-    if (!activeDrag) return;
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
-    activeDrag.style.left = (startLeft + deltaX) + 'px';
-    activeDrag.style.top = (startTop + deltaY) + 'px';
-}
-
-function stopDrag() {
-    if (activeDrag && activeDrag.id === 'win-paint') {
-        syncPaintCanvasSize(activeDrag);
+    if (appId === 'minesweeper' && msTimerInterval) {
+        clearInterval(msTimerInterval);
+        msTimerInterval = null;
     }
-    activeDrag = null;
-    document.onmousemove = null;
-    document.onmouseup = null;
 }
 
-// Taskbar System
-function addTaskbarItem(appId, title) {
-    const tb = document.getElementById('taskbar-apps');
+function minimizeWindow(appId) {
+    const win = document.getElementById(`win-${appId}`);
+    if (win) win.remove();
+    const tbi = document.getElementById(`tbi-${appId}`);
+    if (tbi) tbi.classList.remove('active');
+}
+
+// Taskbar Tracking Array Setup
+function addTaskbarTab(appId, title) {
+    const appsBar = document.getElementById('taskbar-apps');
+    if (!appsBar) return;
+    if (document.getElementById(`tbi-${appId}`)) return;
+
     const btn = document.createElement('div');
-    btn.className = 'taskbar-item active';
-    btn.id = 'taskbar-item-' + appId;
-    
-    let iconSrc = 'https://win98icons.alexmeub.com/icons/png/notepad-0.png';
-    if(appId === 'calculator') iconSrc = 'https://win98icons.alexmeub.com/icons/png/calculator-0.png';
-    if(appId === 'cmd') iconSrc = 'https://win98icons.alexmeub.com/icons/png/console_prompt-0.png';
-    if(appId === 'minesweeper') iconSrc = 'https://win98icons.alexmeub.com/icons/png/minesweeper_laser-0.png';
-    if(appId === 'paint') iconSrc = 'https://win98icons.alexmeub.com/icons/png/paint_old-0.png';
-    if(appId === 'mediaplayer') iconSrc = 'https://win98icons.alexmeub.com/icons/png/cd_audio_cd-0.png';
-    if(appId === 'control-panel') iconSrc = 'https://win98icons.alexmeub.com/icons/png/control_panel-4.png';
-    
-    btn.innerHTML = `<img src="${iconSrc}" width="16" style="margin-right:5px;"> ${title}`;
-    
-    btn.onclick = (e) => {
-        e.stopPropagation();
-        const win = windows[appId].el;
-        if (win.style.display === 'none') {
-            restoreWindow(appId);
+    btn.id = `tbi-${appId}`;
+    btn.className = 'taskbar-item';
+    btn.textContent = title.split(' - ')[0];
+    btn.onclick = () => {
+        if (document.getElementById(`win-${appId}`) && activeWindowId === appId) {
+            minimizeWindow(appId);
         } else {
-            if (win.style.zIndex == zIndexCounter) {
-                minimizeWindow(null, appId);
-            } else {
-                focusWindow(appId);
-            }
+            openWindow(appId);
         }
     };
-    
-    document.querySelectorAll('.taskbar-item').forEach(el => el.classList.remove('active'));
-    tb.appendChild(btn);
+    appsBar.appendChild(btn);
 }
 
-// Calculator Engine Logic
-function getCalcDisplay(btnEl) {
-    return btnEl.closest('.calculator').querySelector('.calc-display');
-}
-function calcType(e, val) {
-    const appId = e.target.closest('.window').id.replace('win-', '');
-    windows[appId].calcValue += val;
-    getCalcDisplay(e.target).value = windows[appId].calcValue;
-}
-if (!window.calcOp) {
-    window.calcOp = function(e, op) {
-        const appId = e.target.closest('.window').id.replace('win-', '');
-        windows[appId].calcValue += op;
-        getCalcDisplay(e.target).value = windows[appId].calcValue;
+// Dragging Layer Interceptor Engine
+function startWindowDrag(e, appId) {
+    const win = document.getElementById(`win-${appId}`);
+    if (!win) return;
+    focusWindow(appId);
+
+    if (e.target.closest('.title-bar-controls')) return;
+
+    let posX = e.clientX;
+    let posY = e.clientY;
+
+    function moveEvent(moveEvt) {
+        const diffX = moveEvt.clientX - posX;
+        const diffY = moveEvt.clientY - posY;
+        posX = moveEvt.clientX;
+        posY = moveEvt.clientY;
+        win.style.left = `${win.offsetLeft + diffX}px`;
+        win.style.top = `${win.offsetTop + diffY}px`;
     }
-}
-function calcClear(e) {
-    const appId = e.target.closest('.window').id.replace('win-', '');
-    windows[appId].calcValue = '';
-    getCalcDisplay(e.target).value = '0';
-}
-function calcEq(e) {
-    const appId = e.target.closest('.window').id.replace('win-', '');
-    try {
-        if(windows[appId].calcValue) {
-            windows[appId].calcValue = eval(windows[appId].calcValue).toString();
-            getCalcDisplay(e.target).value = windows[appId].calcValue;
-        }
-    } catch {
-        getCalcDisplay(e.target).value = 'Error';
-        windows[appId].calcValue = '';
+
+    function stopEvent() {
+        document.removeEventListener('mousemove', moveEvent);
+        document.removeEventListener('mouseup', stopEvent);
     }
+
+    document.addEventListener('mousemove', moveEvent);
+    document.addEventListener('mouseup', stopEvent);
 }
 
-// CMD Command Engine Logic
-function focusCmdInput(el) {
-    const input = el.querySelector('.cmd-input');
-    if (input) input.focus();
+// App Subsystem Interface Blocks: CMD Prompt Interpreter
+function focusCmdInput(container) {
+    const inp = container.querySelector('.cmd-input');
+    if (inp) inp.focus();
 }
+
 function handleCmd(e) {
-    if (e.key === 'Enter') {
-        const input = e.target;
-        const cmd = input.value.trim();
-        const winContent = input.closest('.cmd');
-        const output = winContent.querySelector('.cmd-output');
-        
-        output.innerHTML += cmd + '<br>';
-        
-        if (cmd.toLowerCase() === 'dir') {
-            output.innerHTML += ' Volume in drive C has no label.<br> Directory of C:\\Users\\User<br><br>08/06/2026  03:15 PM    &lt;DIR&gt;          .<br>08/06/2026  03:15 PM    &lt;DIR&gt;          ..<br>08/06/2026  03:15 PM                 0 config.sys<br>               1 File(s)              0 bytes<br><br>';
-        } else if (cmd.toLowerCase() === 'help') {
-            output.innerHTML += 'Available commands: dir, help, echo, cls, theme, winver<br>';
-        } else if (cmd.toLowerCase().startsWith('echo ')) {
-            output.innerHTML += cmd.substring(5) + '<br>';
-        } else if (cmd.toLowerCase() === 'cls') {
-            output.innerHTML = 'Microsoft Windows [Version 6.1.7601]<br>Copyright (c) 2009 Microsoft Corporation. All rights reserved.<br><br>';
-        } else if (cmd.toLowerCase() === 'winver') {
-            output.innerHTML += 'WebOS Environment Platform (Build 2026.1.1)<br>';
-        } else if (cmd.toLowerCase().startsWith('theme ')) {
-            const tgtTheme = cmd.substring(6).trim().toLowerCase();
-            if(['aero','classic','neon'].includes(tgtTheme)) {
-                changeTheme(tgtTheme);
-                output.innerHTML += `Theme altered to ${tgtTheme}.<br>`;
-            } else {
-                output.innerHTML += "Unknown theme choice. Try 'aero', 'classic', or 'neon'.<br>";
-            }
-        } else if (cmd !== '') {
-            output.innerHTML += `'${cmd}' is not recognized as an internal or external command.<br>`;
+    if (e.key !== 'Enter') return;
+    const inp = e.target;
+    const cmdText = inp.value.trim().toLowerCase();
+    const winContent = inp.closest('.app-content');
+    const out = winContent.querySelector('.cmd-output');
+
+    let response = `\n'${inp.value}' is not recognized as an internal or external command,\noperable program or batch file.\n`;
+    
+    if (cmdText === 'help') {
+        response = `\nSupported OS commands:\n  help    - Show system documentation\n  ver     - Output environment builds\n  cls     - Flush terminal stream buffer\n  theme   - Toggle theme configurations (theme classic / theme aero)\n`;
+    } else if (cmdText === 'ver') {
+        response = `\nMicrosoft Windows Engine Sandbox Terminal [Version 6.1.7601]\n`;
+    } else if (cmdText === 'cls') {
+        out.innerHTML = '';
+        inp.value = '';
+        return;
+    } else if (cmdText.startsWith('theme ')) {
+        const selection = cmdText.split(' ')[1];
+        if (['aero', 'classic', 'neon'].includes(selection)) {
+            changeTheme(selection);
+            response = `\nTheme successfully updated to ${selection}.\n`;
+        } else {
+            response = `\nInvalid theme. Try 'theme aero' or 'theme classic'.\n`;
         }
-        
-        output.innerHTML += 'C:\\Users\\User&gt; ';
-        input.value = '';
-        winContent.scrollTop = winContent.scrollHeight;
     }
+
+    out.innerHTML += `C:\\Users\\User&gt; ${inp.value}<br>${response.replace(/\n/g, '<br>')}<br>`;
+    inp.value = '';
+    
+    const cmdParent = winContent.closest('.cmd');
+    if (cmdParent) cmdParent.scrollTop = cmdParent.scrollHeight;
 }
 
-// Control Panel Logic
-function switchCPTab(navItem, tabId) {
-    const appEl = navItem.closest('.control-panel-app');
-    appEl.querySelectorAll('.cp-nav-item').forEach(el => el.classList.remove('active'));
-    navItem.classList.add('active');
-    
-    appEl.querySelectorAll('.cp-tab-pane').forEach(el => el.classList.add('hidden'));
-    appEl.querySelector('#cp-' + tabId).classList.remove('hidden');
+// App Subsystem Interface Blocks: Control Panel Theme Routing
+function switchCPTab(target, tabId) {
+    const appWin = target.closest('.control-panel-app');
+    appWin.querySelectorAll('.cp-nav-item').forEach(el => el.classList.remove('active'));
+    target.classList.add('active');
+
+    appWin.querySelectorAll('.cp-tab-pane').forEach(el => el.classList.add('hidden'));
+    const targetedPane = appWin.querySelector(`#cp-${tabId}`);
+    if (targetedPane) targetedPane.classList.remove('hidden');
 }
+
 function changeTheme(themeName) {
     document.body.setAttribute('data-theme', themeName);
 }
-function toggleBootScreenSetting(checkbox) {
-    systemConfig.showBootScreen = checkbox.checked;
+
+function toggleBootScreenSetting(cb) {
+    // Soft toggle rule matrix mapping logic interface placeholders
 }
-function updateWallpaperPattern(selectEl) {
+
+function updateWallpaperPattern(select) {
     const desktop = document.getElementById('desktop');
-    if (selectEl.value === 'solid') {
-        desktop.style.background = 'var(--desktop-bg)';
-    } else if (selectEl.value === 'grid') {
-        desktop.style.background = 'radial-gradient(circle, transparent 20%, var(--desktop-bg) 20%, var(--desktop-bg) 80%, transparent 80%, transparent), radial-gradient(circle, transparent 20%, var(--desktop-bg) 20%, var(--desktop-bg) 80%, transparent 80%, transparent) 10px 10px';
-        desktop.style.backgroundColor = '#111';
+    if (!desktop) return;
+    const style = select.value;
+    if (style === 'solid') {
+        desktop.style.background = '#1a365d';
+    } else if (style === 'grid') {
+        desktop.style.background = 'radial-gradient(circle, #2d3748 10%, transparent 11%), #1a202c';
         desktop.style.backgroundSize = '20px 20px';
     } else {
-        desktop.style.background = '';
+        desktop.style.background = 'var(--desktop-bg)';
+        desktop.style.backgroundSize = 'cover';
     }
 }
 
-// Minesweeper Engine Logic
-function initMinesweeper(e) {
-    const winEl = e.target.closest('.window');
-    initMinesweeperOnElement(winEl);
-}
+// App Subsystem Interface Blocks: Calculator Matrix Engine
+let calcMemory = '0';
+let calcOperation = null;
+let calcResetOnNextType = false;
 
-function initMinesweeperOnElement(winEl) {
-    const appId = 'minesweeper';
-    const state = windows[appId];
-    if (!state) return;
-    
-    if (state.msTimerId) clearInterval(state.msTimerId);
-    
-    const rows = 9;
-    const cols = 9;
-    const minesCount = 10;
-    
-    state.msRows = rows;
-    state.msCols = cols;
-    state.msMinesCount = minesCount;
-    state.msFlags = 0;
-    state.msGameOver = false;
-    state.msTime = 0;
-    state.msCellsRevealed = 0;
-    state.msStarted = false;
-    
-    const gridEl = winEl.querySelector('.ms-grid');
-    const smileyEl = winEl.querySelector('.ms-smiley');
-    const mineCounterEl = winEl.querySelector('#ms-mines-count');
-    const timerEl = winEl.querySelector('#ms-timer');
-    
-    smileyEl.innerText = '🙂';
-    timerEl.innerText = '000';
-    mineCounterEl.innerText = String(minesCount).padStart(3, '0');
-    gridEl.innerHTML = '';
-    
-    const board = [];
-    for(let r=0; r<rows; r++) {
-        board[r] = [];
-        for(let c=0; c<cols; c++) {
-            board[r][c] = { r, c, isMine: false, neighborMines: 0, revealed: false, flagged: false };
-        }
-    }
-    
-    let planted = 0;
-    while(planted < minesCount) {
-        let r = Math.floor(Math.random() * rows);
-        let c = Math.floor(Math.random() * cols);
-        if(!board[r][c].isMine) {
-            board[r][c].isMine = true;
-            planted++;
-        }
-    }
-    
-    for(let r=0; r<rows; r++) {
-        for(let c=0; c<cols; c++) {
-            if(board[r][c].isMine) continue;
-            let count = 0;
-            for(let dr=-1; dr<=1; dr++) {
-                for(let dc=-1; dc<=1; dc++) {
-                    if(board[r+dr] && board[r+dr][c+dc] && board[r+dr][c+dc].isMine) count++;
-                }
-            }
-            board[r][c].neighborMines = count;
-        }
-    }
-    
-    state.msBoard = board;
-    
-    for(let r=0; r<rows; r++) {
-        for(let c=0; c<cols; c++) {
-            const cellEl = document.createElement('div');
-            cellEl.className = 'ms-cell';
-            cellEl.dataset.row = r;
-            cellEl.dataset.col = c;
-            
-            cellEl.addEventListener('click', (ev) => handleMSClick(ev, r, c, winEl));
-            cellEl.addEventListener('contextmenu', (ev) => {
-                ev.preventDefault();
-                handleMSRightClick(ev, r, c, winEl);
-            });
-            
-            gridEl.appendChild(cellEl);
-        }
-    }
-}
-
-function startMSTimer(winEl) {
-    const appId = 'minesweeper';
-    const state = windows[appId];
-    const timerEl = winEl.querySelector('#ms-timer');
-    
-    state.msStarted = true;
-    state.msTimerId = setInterval(() => {
-        state.msTime++;
-        if(state.msTime > 999) state.msTime = 999;
-        timerEl.innerText = String(state.msTime).padStart(3, '0');
-    }, 1000);
-}
-
-function handleMSClick(ev, r, c, winEl) {
-    const appId = 'minesweeper';
-    const state = windows[appId];
-    if(state.msGameOver) return;
-    
-    const cell = state.msBoard[r][c];
-    if(cell.flagged || cell.revealed) return;
-    
-    if(!state.msStarted) startMSTimer(winEl);
-    
-    revealMSCell(r, c, winEl);
-    checkMSWinState(winEl);
-}
-
-function handleMSRightClick(ev, r, c, winEl) {
-    const appId = 'minesweeper';
-    const state = windows[appId];
-    if(state.msGameOver) return;
-    
-    const cell = state.msBoard[r][c];
-    if(cell.revealed) return;
-    
-    if(!state.msStarted) startMSTimer(winEl);
-    
-    const cellEl = winEl.querySelector(`.ms-cell[data-row='${r}'][data-col='${c}']`);
-    const mineCounterEl = winEl.querySelector('#ms-mines-count');
-    
-    if(!cell.flagged) {
-        cell.flagged = true;
-        cellEl.classList.add('flagged');
-        cellEl.innerText = '🚩';
-        state.msFlags++;
+function calcType(e, char) {
+    const display = e.target.closest('.calculator').querySelector('.calc-display');
+    if (display.value === '0' || calcResetOnNextType) {
+        display.value = char;
+        calcResetOnNextType = false;
     } else {
-        cell.flagged = false;
-        cellEl.classList.remove('flagged');
-        cellEl.innerText = '';
-        state.msFlags--;
-    }
-    mineCounterEl.innerText = String(state.msMinesCount - state.msFlags).padStart(3, '0');
-}
-
-function revealMSCell(r, c, winEl) {
-    const appId = 'minesweeper';
-    const state = windows[appId];
-    const cell = state.msBoard[r][c];
-    
-    if(cell.revealed) return;
-    
-    cell.revealed = true;
-    state.msCellsRevealed++;
-    
-    const cellEl = winEl.querySelector(`.ms-cell[data-row='${r}'][data-col='${c}']`);
-    cellEl.classList.add('revealed');
-    
-    if(cell.isMine) {
-        cellEl.classList.add('mine');
-        cellEl.innerText = '💣';
-        triggerMSGameOver(false, winEl);
-        return;
-    }
-    
-    if(cell.neighborMines > 0) {
-        cellEl.innerText = cell.neighborMines;
-        cellEl.dataset.num = cell.neighborMines;
-    } else {
-        for(let dr=-1; dr<=1; dr++) {
-            for(let dc=-1; dc<=1; dc++) {
-                if(state.msBoard[r+dr] && state.msBoard[r+dr][c+dc]) {
-                    revealMSCell(r+dr, c+dc, winEl);
-                }
-            }
-        }
+        display.value += char;
     }
 }
 
-function checkMSWinState(winEl) {
-    const appId = 'minesweeper';
-    const state = windows[appId];
-    const totalCells = state.msRows * state.msCols;
-    if(state.msCellsRevealed === totalCells - state.msMinesCount && !state.msGameOver) {
-        triggerMSGameOver(true, winEl);
-    }
+function calcOp(e, op) {
+    const display = e.target.closest('.calculator').querySelector('.calc-display');
+    calcMemory = display.value;
+    calcOperation = op;
+    calcResetOnNextType = true;
 }
 
-function triggerMSGameOver(isWin, winEl) {
-    const appId = 'minesweeper';
-    const state = windows[appId];
-    state.msGameOver = true;
-    clearInterval(state.msTimerId);
-    
-    const smileyEl = winEl.querySelector('.ms-smiley');
-    smileyEl.innerText = isWin ? '😎' : '😵';
-    
-    for(let r=0; r<state.msRows; r++) {
-        for(let c=0; c<state.msCols; c++) {
-            const item = state.msBoard[r][c];
-            const cellEl = winEl.querySelector(`.ms-cell[data-row='${r}'][data-col='${c}']`);
-            if(item.isMine && !item.flagged) {
-                cellEl.classList.add('revealed', 'mine');
-                cellEl.innerText = '💣';
-            }
-        }
-    }
+function calcClear(e) {
+    const display = e.target.closest('.calculator').querySelector('.calc-display');
+    display.value = '0';
+    calcMemory = '0';
+    calcOperation = null;
+    calcResetOnNextType = false;
 }
 
-// Paint Studio Engine Logic
-function initPaintCanvasEngine(winEl) {
-    const canvas = winEl.querySelector('.paint-canvas');
+function calcEq(e) {
+    const display = e.target.closest('.calculator').querySelector('.calc-display');
+    if (!calcOperation) return;
+    const val1 = parseFloat(calcMemory);
+    const val2 = parseFloat(display.value);
+    let out = 0;
+    switch(calcOperation) {
+        case '+': out = val1 + val2; break;
+        case '-': out = val1 - val2; break;
+        case '*': out = val1 * val2; break;
+        case '/': out = val2 !== 0 ? val1 / val2 : 'Error'; break;
+    }
+    display.value = out;
+    calcOperation = null;
+    calcResetOnNextType = true;
+}
+
+// App Subsystem Interface Blocks: Paint Logic Canvas Matrix
+function initPaintCanvas(canvas) {
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    
     let painting = false;
-    canvas.brushColor = '#000000';
-    canvas.brushSize = 2;
+    let brushColor = '#000000';
+    let brushSize = 2;
 
-    syncPaintCanvasSize(winEl);
+    // Standard high density display configuration rules mappings
+    canvas.width = 280;
+    canvas.height = 200;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    function startPosition(e) {
-        painting = true;
-        draw(e);
-    }
-    function finishedPosition() {
-        painting = false;
-        ctx.beginPath();
-    }
+    canvas.onmousedown = (e) => { painting = true; draw(e); };
+    canvas.onmousemove = (e) => { draw(e); };
+    window.addEventListener('mouseup', () => painting = false);
+
     function draw(e) {
-        if(!painting) return;
+        if (!painting) return;
         const rect = canvas.getBoundingClientRect();
-        
-        ctx.lineWidth = canvas.brushSize;
+        ctx.lineWidth = brushSize;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = canvas.brushColor;
+        ctx.strokeStyle = brushColor;
 
         ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
         ctx.stroke();
@@ -588,86 +341,207 @@ function initPaintCanvasEngine(winEl) {
         ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
     }
 
-    canvas.addEventListener('mousedown', startPosition);
-    canvas.addEventListener('mouseup', finishedPosition);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseleave', finishedPosition);
-}
-
-function syncPaintCanvasSize(winEl) {
-    const canvas = winEl.querySelector('.paint-canvas');
-    const container = winEl.querySelector('.canvas-container');
-    if (!canvas || !container) return;
-    
-    // Save image buffer to handle resizing changes cleanly
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(canvas, 0, 0);
-
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
-
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(tempCanvas, 0, 0);
-}
-
-function updatePaintBrushColor(inputEl) {
-    const canvas = inputEl.closest('.paint-app').querySelector('.paint-canvas');
-    if (canvas) canvas.brushColor = inputEl.value;
-}
-
-function setPaintBrushSize(e, size) {
-    const container = e.target.closest('.paint-toolbar');
-    container.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
-    e.target.classList.add('active');
-    
-    const canvas = e.target.closest('.paint-app').querySelector('.paint-canvas');
-    if (canvas) canvas.brushSize = size;
-}
-
-function clearPaintCanvas(btnEl) {
-    const canvas = btnEl.closest('.paint-app').querySelector('.paint-canvas');
-    if (canvas) {
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-}
-
-// Media Player Engine Logic
-function controlPlayer(btnEl, action) {
-    const appContainer = btnEl.closest('.player-app');
-    const audio = appContainer.querySelector('.player-audio-node');
-    const statusText = appContainer.querySelector('.track-status');
-    const visualizer = appContainer.querySelector('.visualization-box');
-
-    if (action === 'play') {
-        audio.play().catch(() => {
-            statusText.innerText = "Error Loading Audio";
+    const appRoot = canvas.closest('.paint-app');
+    if (appRoot) {
+        appRoot.querySelector('.paint-color').onchange = (evt) => { brushColor = evt.target.value; };
+        appRoot.querySelectorAll('.size-btn').forEach(btn => {
+            btn.onclick = (evt) => {
+                appRoot.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                evt.target.classList.add('active');
+                brushSize = parseInt(evt.target.getAttribute('onclick').match(/\d+/)[0]);
+            };
         });
-        statusText.innerText = "Playing";
-        visualizer.classList.add('active');
-    } else if (action === 'pause') {
-        audio.pause();
-        statusText.innerText = "Paused";
-        visualizer.classList.remove('active');
-    } else if (action === 'stop') {
-        audio.pause();
-        audio.currentTime = 0;
-        statusText.innerText = "Stopped";
-        visualizer.classList.remove('active');
+        appRoot.querySelector('.paint-clear-btn').onclick = () => {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+        };
     }
 }
 
-// Global Document Event Click Closes Context Menus
-document.addEventListener('click', (e) => {
-    const startMenu = document.getElementById('start-menu');
-    const startBtn = document.getElementById('start-btn');
-    if (!startMenu.classList.contains('hidden') && !startMenu.contains(e.target) && !startBtn.contains(e.target)) {
-        startMenu.classList.add('hidden');
+// App Subsystem Interface Blocks: Audio Player Hook Sync
+function controlPlayer(btn, macro) {
+    const parent = btn.closest('.player-app');
+    const node = parent.querySelector('.player-audio-node');
+    const visualizer = parent.querySelector('.visualization-box');
+    const statusText = parent.querySelector('.track-status');
+
+    if (macro === 'play') {
+        node.play().catch(() => {});
+        visualizer.classList.add('active');
+        statusText.textContent = 'Playing';
+    } else if (macro === 'pause') {
+        node.pause();
+        visualizer.classList.remove('active');
+        statusText.textContent = 'Paused';
+    } else if (macro === 'stop') {
+        node.pause();
+        node.currentTime = 0;
+        visualizer.classList.remove('active');
+        statusText.textContent = 'Stopped';
     }
-});
+}
+
+// App Subsystem Interface Blocks: Native Logic Grid Minesweeper Initialization
+function initMinesweeper(e) {
+    const app = e.target.closest('.minesweeper-app');
+    const gridEl = app.querySelector('.ms-grid');
+    initMinesweeperElements(gridEl);
+}
+
+function initMinesweeperElements(gridContainer) {
+    const parentApp = gridContainer.closest('.minesweeper-app');
+    const mineCounter = parentApp.querySelector('#ms-mines-count');
+    const timerCounter = parentApp.querySelector('#ms-timer');
+    const smiley = parentApp.querySelector('.ms-smiley');
+
+    if (msTimerInterval) clearInterval(msTimerInterval);
+    msTimeElapsed = 0;
+    msIsGameOver = false;
+    timerCounter.textContent = '000';
+    mineCounter.textContent = '010';
+    smiley.textContent = '🙂';
+
+    msGrid = Array(9).fill(null).map(() => Array(9).fill(0));
+    gridContainer.innerHTML = '';
+
+    // Assign 10 coordinate arrays for mines randomly
+    let assigned = 0;
+    while (assigned < 10) {
+        const r = Math.floor(Math.random() * 9);
+        const c = Math.floor(Math.random() * 9);
+        if (msGrid[r][c] !== 'M') {
+            msGrid[r][c] = 'M';
+            assigned++;
+        }
+    }
+
+    // Set configuration maps around nodes
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            if (msGrid[r][c] === 'M') continue;
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (msGrid[r + i] && msGrid[r + i][c + j] === 'M') count++;
+                }
+            }
+            msGrid[r][c] = count;
+        }
+    }
+
+    // Create cells inside DOM element nodes sequentially
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'ms-cell';
+            cell.dataset.row = r;
+            cell.dataset.col = c;
+            
+            cell.addEventListener('click', (evt) => handleMinesweeperClick(evt, r, c, cell, parentApp));
+            cell.addEventListener('contextmenu', (evt) => {
+                evt.preventDefault();
+                handleMinesweeperRightClick(cell, mineCounter);
+            });
+            gridContainer.appendChild(cell);
+        }
+    }
+}
+
+function startMinesTimer(timerEl) {
+    if (msTimerInterval) return;
+    msTimerInterval = setInterval(() => {
+        msTimeElapsed++;
+        timerEl.textContent = String(Math.min(msTimeElapsed, 999)).padStart(3, '0');
+    }, 1000);
+}
+
+function handleMinesweeperClick(evt, r, c, cell, parentApp) {
+    if (msIsGameOver || cell.classList.contains('revealed') || cell.textContent === '🚩') return;
+    
+    const timerCounter = parentApp.querySelector('#ms-timer');
+    startMinesTimer(timerCounter);
+
+    if (msGrid[r][c] === 'M') {
+        // Mine blast triggered
+        cell.classList.add('mine');
+        cell.textContent = '💣';
+        msIsGameOver = true;
+        clearInterval(msTimerInterval);
+        msTimerInterval = null;
+        parentApp.querySelector('.ms-smiley').textContent = '😵';
+        revealAllMines(parentApp);
+    } else {
+        revealMinesCell(r, c, parentApp);
+        checkMinesweeperWinCondition(parentApp);
+    }
+}
+
+function handleMinesweeperRightClick(cell, counterEl) {
+    if (msIsGameOver || cell.classList.contains('revealed')) return;
+    let currentMines = parseInt(counterEl.textContent);
+
+    if (cell.textContent === '🚩') {
+        cell.textContent = '';
+        counterEl.textContent = String(currentMines + 1).padStart(3, '0');
+    } else {
+        cell.textContent = '🚩';
+        counterEl.textContent = String(currentMines - 1).padStart(3, '0');
+    }
+}
+
+function revealMinesCell(r, c, parentApp) {
+    const cell = parentApp.querySelector(`.ms-cell[data-row="${r}"][data-col="${c}"]`);
+    if (!cell || cell.classList.contains('revealed')) return;
+
+    cell.classList.add('revealed');
+    const val = msGrid[r][c];
+
+    if (val > 0) {
+        cell.textContent = val;
+        cell.setAttribute('data-num', val);
+    } else {
+        // Continuous flood expansion sequence over null zones
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                if (msGrid[r + i] !== undefined && msGrid[r + i][c + j] !== undefined) {
+                    revealMinesCell(r + i, c + j, parentApp);
+                }
+            }
+        }
+    }
+}
+
+function revealAllMines(parentApp) {
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            if (msGrid[r][c] === 'M') {
+                const cell = parentApp.querySelector(`.ms-cell[data-row="${r}"][data-col="${c}"]`);
+                if (cell && !cell.classList.contains('mine')) {
+                    cell.textContent = '💣';
+                    cell.classList.add('revealed');
+                }
+            }
+        }
+    }
+}
+
+function checkMinesweeperWinCondition(parentApp) {
+    const cells = parentApp.querySelectorAll('.ms-cell');
+    let coveredSafeCells = 0;
+
+    cells.forEach(cell => {
+        const r = parseInt(cell.dataset.row);
+        const c = parseInt(cell.dataset.col);
+        if (msGrid[r][c] !== 'M' && !cell.classList.contains('revealed')) {
+            coveredSafeCells++;
+        }
+    });
+
+    if (coveredSafeCells === 0) {
+        msIsGameOver = true;
+        clearInterval(msTimerInterval);
+        msTimerInterval = null;
+        parentApp.querySelector('.ms-smiley').textContent = '😎';
+    }
+}
