@@ -19,31 +19,79 @@
     <div id="desktop">
         <div class="desktop-icons">
             <div class="icon" ondblclick="openWindow('notepad')">
-                <img src="https://win98icons.alexmeub.com/icons/png/notepad-0.png" alt="Notepad">
+                <div class="app-icon-wrapper notepad-icon">
+                    <svg viewBox="0 0 32 32" width="32" height="32">
+                        <path d="M6 2h14l6 6v22H6V2z" fill="#f6f6f6" stroke="#333" stroke-width="1.5"/>
+                        <path d="M20 2v6h6" fill="none" stroke="#333" stroke-width="1.5"/>
+                        <path d="M9 12h14M9 16h14M9 20h14M9 24h10" stroke="#007acc" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
                 <span>Notepad</span>
             </div>
             <div class="icon" ondblclick="openWindow('calculator')">
-                <img src="https://win98icons.alexmeub.com/icons/png/calculator-0.png" alt="Calculator">
+                <div class="app-icon-wrapper calc-icon">
+                    <svg viewBox="0 0 32 32" width="32" height="32">
+                        <rect x="5" y="3" width="22" height="26" rx="2" fill="#3a3a3a" stroke="#fff" stroke-width="1"/>
+                        <rect x="8" y="6" width="16" height="6" fill="#a1b5a1" stroke="#222"/>
+                        <circle cx="10" cy="17" r="2" fill="#00adef"/><circle cx="16" cy="17" r="2" fill="#fff"/>
+                        <circle cx="22" cy="17" r="2" fill="#fff"/><circle cx="10" cy="23" r="2" fill="#fff"/>
+                        <circle cx="16" cy="23" r="2" fill="#fff"/><circle cx="22" cy="23" r="2" fill="#ff5555"/>
+                    </svg>
+                </div>
                 <span>Calculator</span>
             </div>
             <div class="icon" ondblclick="openWindow('cmd')">
-                <img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" alt="CMD">
+                <div class="app-icon-wrapper cmd-icon">
+                    <svg viewBox="0 0 32 32" width="32" height="32">
+                        <rect x="3" y="5" width="26" height="22" rx="2" fill="#111" stroke="#888" stroke-width="1.5"/>
+                        <path d="M8 12l4 3-4 3M14 18h6" stroke="#00ffcc" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    </svg>
+                </div>
                 <span>CMD Prompt</span>
             </div>
             <div class="icon" ondblclick="openWindow('minesweeper')">
-                <img src="" >
+                <div class="app-icon-wrapper ms-icon">
+                    <svg viewBox="0 0 32 32" width="32" height="32">
+                        <rect x="4" y="4" width="24" height="24" fill="#bdbdbd" stroke="#333" stroke-width="1.5"/>
+                        <circle cx="16" cy="16" r="6" fill="#111"/>
+                        <path d="M16 4v6M16 22v6M4 16h6M22 16h6M7 7l4 4M21 21l4 4M25 7l-4 4M11 21l-4 4" stroke="#111" stroke-width="2"/>
+                        <circle cx="14" cy="14" r="1.5" fill="#fff"/>
+                    </svg>
+                </div>
                 <span>Minesweeper</span>
             </div>
             <div class="icon" ondblclick="openWindow('paint')">
-                <img src="https://win98icons.alexmeub.com/icons/png/paint_old-0.png" alt="Paint">
+                <div class="app-icon-wrapper paint-icon">
+                    <svg viewBox="0 0 32 32" width="32" height="32">
+                        <path d="M4 16C4 8 10 4 18 4s10 5 10 10-2 8-6 8-3 4-6 4-8-2-8-10z" fill="#fbf0db" stroke="#6d4c41" stroke-width="1.5"/>
+                        <circle cx="9" cy="11" r="2" fill="#ff3b30"/>
+                        <circle cx="15" cy="8" r="2" fill="#ffcc00"/>
+                        <circle cx="21" cy="11" r="2" fill="#4cd964"/>
+                        <circle cx="23" cy="17" r="2" fill="#007aff"/>
+                        <path d="M22 22l6 6-2 2-6-6z" fill="#ffcc00" stroke="#333"/>
+                    </svg>
+                </div>
                 <span>Paint</span>
             </div>
             <div class="icon" ondblclick="openWindow('mediaplayer')">
-                <img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd-0.png" alt="Media Player">
+                <div class="app-icon-wrapper media-icon">
+                    <svg viewBox="0 0 32 32" width="32" height="32">
+                        <circle cx="16" cy="16" r="12" fill="#e0e0e0" stroke="#444" stroke-width="1.5"/>
+                        <circle cx="16" cy="16" r="4" fill="#b4d2e6" stroke="#444"/>
+                        <path d="M13 11l8 5-8 5z" fill="#007acc"/>
+                    </svg>
+                </div>
                 <span>Media Player</span>
             </div>
             <div class="icon" ondblclick="openWindow('control-panel')">
-                <img src="" >
+                <div class="app-icon-wrapper cp-icon">
+                    <svg viewBox="0 0 32 32" width="32" height="32">
+                        <rect x="4" y="6" width="24" height="20" rx="2" fill="#fff" stroke="#0056b3" stroke-width="2"/>
+                        <rect x="4" y="6" width="24" height="5" fill="#0056b3"/>
+                        <circle cx="11" cy="16" r="2" fill="#777"/><circle cx="21" cy="16" r="2" fill="#777"/>
+                        <path d="M8 16h6M18 16h6M11 21h10" stroke="#777" stroke-width="1.5"/>
+                    </svg>
+                </div>
                 <span>Control Panel</span>
             </div>
         </div>
@@ -70,22 +118,22 @@
     <div id="start-menu" class="hidden">
         <div class="start-menu-left">
             <div class="start-item" onclick="openWindow('notepad'); toggleStartMenu(event)">
-                <img src="https://win98icons.alexmeub.com/icons/png/notepad-0.png" width="16"> Notepad
+                <span class="sm-icon-placeholder text-notepad">📋</span> Notepad
             </div>
             <div class="start-item" onclick="openWindow('calculator'); toggleStartMenu(event)">
-                <img src="https://win98icons.alexmeub.com/icons/png/calculator-0.png" width="16"> Calculator
+                <span class="sm-icon-placeholder text-calc">🔢</span> Calculator
             </div>
             <div class="start-item" onclick="openWindow('cmd'); toggleStartMenu(event)">
-                <img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="16"> CMD Prompt
+                <span class="sm-icon-placeholder text-cmd">💻</span> CMD Prompt
             </div>
             <div class="start-item" onclick="openWindow('minesweeper'); toggleStartMenu(event)">
-                <img src="https://win98icons.alexmeub.com/icons/png/minesweeper_laser-0.png" width="16"> Minesweeper
+                <span class="sm-icon-placeholder text-ms">💣</span> Minesweeper
             </div>
             <div class="start-item" onclick="openWindow('paint'); toggleStartMenu(event)">
-                <img src="https://win98icons.alexmeub.com/icons/png/paint_old-0.png" width="16"> Paint
+                <span class="sm-icon-placeholder text-paint">🎨</span> Paint
             </div>
             <div class="start-item" onclick="openWindow('mediaplayer'); toggleStartMenu(event)">
-                <img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd-0.png" width="16"> Media Player
+                <span class="sm-icon-placeholder text-player">🎵</span> Media Player
             </div>
         </div>
         <div class="start-menu-right">
@@ -102,7 +150,7 @@
                 <span>User</span>
             </div>
             <hr>
-            <div class="start-system-item" onclick="openWindow('control-panel'); toggleStartMenu(event)">Control Panel</div>
+            <div class="start-system-item" onclick="openWindow('control-panel'); toggleStartMenu(event)">⚙️ Control Panel</div>
         </div>
     </div>
 
